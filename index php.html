@@ -1,0 +1,277 @@
+<?php
+// index.php
+// Static single-page app (React + Tailwind via CDN).
+// Serve this file with any PHP-capable webserver (or rename to .html if not using PHP).
+?>
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ISTN-Inspired — Demo</title>
+  <meta name="description" content="Demo site (React + Tailwind) inspired by ISTN — single-file component." />
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React, ReactDOM, Babel (for demo / single-file JSX) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="antialiased bg-white text-gray-900">
+  <div id="root"></div>
+
+  <!-- App code (JSX) -->
+  <script type="text/babel">
+  const { useEffect, useMemo, useRef, useState } = React;
+
+  // === SITE DATA (editable) ===
+  const SITE = {
+    brand: { name: "Institut Sains & Teknologi Nasional", short: "ISTN-Inspired", logoAlt: "Logo kampus" },
+    nav: [
+      { label: "Beranda", href: "#beranda" }, { label: "Program Studi", href: "#program" }, { label: "Beasiswa", href: "#beasiswa" },
+      { label: "Karir", href: "#karir" }, { label: "Daftar", href: "#daftar" }, { label: "Tentang Kami", href: "#tentang" },
+      { label: "Alumni", href: "#alumni" }, { label: "Berita", href: "#berita" }, { label: "Kolaborasi Strategis", href: "#kolaborasi" },
+      { label: "TDC", href: "#tdc" }, { label: "Kemahasiswaan", href: "#kemahasiswaan" }, { label: "Laporan Tahunan", href: "#laporan" },
+      { label: "Aplikasi Internal", href: "#aplikasi" }, { label: "Kalender Akademik", href: "#kalender" }
+    ],
+    hero: {
+      title: "Institut Sains & Teknologi – untuk Generasi Pelopor",
+      subtitle: "Program studi berorientasi masa depan. Kurikulum adaptif. Kolaborasi industri nyata.",
+      ctas: [{ label: "Daftar Sekarang", href: "#daftar" }, { label: "Jelajahi Program", href: "#program" }],
+      bgAlt: "Gedung kampus dengan nuansa modern"
+    },
+    programs: {
+      tabs: [
+        { key: "S1", label: "Sarjana (S1)", faculty: "Fakultas Sains Terapan dan Teknologi", items: [
+          "Sarjana Arsitektur","Sarjana Arsitektur Lanskap","Sarjana Fisika","Sarjana Matematika","Sarjana Sistem Informasi",
+          "Sarjana Teknik Elektro","Sarjana Teknik Industri","Sarjana Teknik Informatika","Sarjana Teknik Mesin","Sarjana Teknik Sipil"
+        ]},
+        { key: "S2", label: "Magister (S2)", faculty: "Fakultas Sains Terapan dan Teknologi", items: [
+          "Magister Teknik Elektro","Magister Teknik Industri","Magister Teknik Mesin","Magister Teknik Sipil"
+        ]},
+        { key: "Profesi", label: "Profesi", faculty: "Fakultas Farmasi", items: ["Program Studi Profesi Apoteker (PSPA)"] },
+        { key: "RPL", label: "RPL", faculty: "Rekognisi Pembelajaran Lampau", items: [] }
+      ]
+    },
+    news: [
+      { date: "28 Agt", title: "Alur Penyelesaian Studi Mahasiswa ISTN", excerpt: "Panduan ringkas tahapan penyelesaian studi mahasiswa.", href: "#" },
+      { date: "25 Agt", title: "Rektor ISTN Lakukan Kunjungan ke ITB, bahas peluang kerja sama Tri Dharma", excerpt: "Kolaborasi akademik dan riset antara kampus.", href: "#" },
+      { date: "—", title: "ISTN Buka Peluang Magang di Jepang", excerpt: "Kerja sama dengan Nakatani Enetec Corporation.", href: "#" },
+      { date: "—", title: "ISTN Dorong Kedaulatan Digital Kesehatan", excerpt: "Sorotan dari forum ISIF 2025 di Jakarta.", href: "#" }
+    ],
+    partners: ["Xynexis International","IDPRO","KORIKA","MASTEL","Mitra Industri A","Mitra Industri B"],
+    alumni: { featured: { name: "Dr. Ir. Afrianyah Noor, M. Si.", headline: "Teknik Sipil '90 / Wakil Menteri Ketenagakerjaan RI", quote: "Belajar adalah tugas mulia, dan karya terbaik selalu kembali untuk bangsa.", href: "#" } },
+    about: {
+      summary: "Institut Sains dan Teknologi Nasional (ISTN) adalah bagian dari Yayasan Perguruan 'Cikini' yang berlokasi di Jakarta. Berdiri sejak tahun 1950 dan menjadi salah satu perguruan tinggi teknik swasta tertua di Indonesia.",
+      address: "Jl. Moch. Kahfi II No.30, Srengseng Sawah, Jagakarsa, Jakarta Selatan 12630",
+      vision: "Menjadi center of excellence dalam pendidikan tinggi sains dan teknologi yang kreatif, inovatif, unggul, dan berjiwa pelopor.",
+      mission: [
+        "Menyelenggarakan Tridharma berkualitas di bidang sains dan teknologi.",
+        "Mengembangkan kurikulum unggulan yang adaptif.",
+        "Meningkatkan sarana prasarana untuk Tridharma dan pusat pengembangan.",
+        "Menumbuhkan kerja sama, kolaborasi, dan jejaring industri.",
+        "Mewujudkan Good University Governance berkelanjutan."
+      ]
+    },
+    social: [{ label: "Facebook", href: "#" }, { label: "LinkedIn", href: "#" }, { label: "YouTube", href: "#" }, { label: "Instagram", href: "#" }]
+  };
+
+  // === Small UI helpers ===
+  const Container = ({children, className=""}) => <div className={`mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 ${className}`}>{children}</div>;
+  const SectionHeading = ({eyebrow, title, subtitle, center}) => (
+    <div className={`mb-10 ${center ? "text-center" : "text-left"}`}>
+      {eyebrow && <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-indigo-600">{eyebrow}</p>}
+      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">{title}</h2>
+      {subtitle && <p className="mt-3 text-gray-600 max-w-2xl mx-auto">{subtitle}</p>}
+    </div>
+  );
+  const Badge = ({children}) => <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">{children}</span>;
+  const Card = ({children, className="", as="div"}) => React.createElement(as, {className:`rounded-2xl border border-gray-200 bg-white p-6 shadow-sm ${className}`}, children);
+
+  function Carousel({items, renderItem, interval=6000, ariaLabel="Carousel"}){
+    const [index,setIndex] = useState(0);
+    const timeoutRef = useRef(null);
+    useEffect(()=>{
+      if(items.length<=1) return;
+      timeoutRef.current = setTimeout(()=> setIndex(i => (i+1)%items.length), interval);
+      return ()=> clearTimeout(timeoutRef.current);
+    },[index, items.length, interval]);
+    return (
+      <div className="relative" aria-roledescription="carousel" aria-label={ariaLabel}>
+        <div className="overflow-hidden rounded-2xl">
+          <div className="flex transition-transform duration-700" style={{transform:`translateX(-${index*100}%)`}}>
+            {items.map((it,i)=> <div key={i} className="min-w-full">{renderItem(it,i)}</div>)}
+          </div>
+        </div>
+        {items.length>1 && <div className="mt-3 flex justify-center gap-2" role="tablist">
+          {items.map((_,i)=> <button key={i} role="tab" aria-selected={i===index} aria-label={`Slide ${i+1}`} className={`h-2 w-2 rounded-full ${i===index ? "bg-indigo-600" : "bg-gray-300"}`} onClick={()=>setIndex(i)} />)}
+        </div>}
+      </div>
+    );
+  }
+
+  function TabGroup({tabs, renderList}) {
+    const [active,setActive] = useState(tabs[0]?.key);
+    const activeTab = useMemo(()=> tabs.find(t=>t.key===active), [tabs, active]);
+    return (
+      <div>
+        <div role="tablist" className="flex flex-wrap gap-2">
+          {tabs.map(t=> <button key={t.key} role="tab" aria-selected={t.key===active} onClick={()=>setActive(t.key)} className={`rounded-full px-4 py-2 text-sm font-semibold transition border ${t.key===active ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-700 border-gray-300 hover:border-gray-400"}`}>{t.label}</button>)}
+        </div>
+        <div className="mt-6">{activeTab ? renderList(activeTab) : <p>—</p>}</div>
+      </div>
+    );
+  }
+
+  const LogoCloud = ({names}) => <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">{names.map((n,i)=><div key={i} className="flex h-16 items-center justify-center rounded-xl border border-gray-200 bg-white px-4"><span className="text-sm font-semibold text-gray-700">{n}</span></div>)}</div>;
+
+  // === Top elements ===
+  const SkipToContent = ()=> <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:shadow-lg">Skip to Main Content</a>;
+
+  const TopBar = ()=> (
+    <div className="bg-gray-900 text-gray-100">
+      <Container className="flex items-center justify-between py-2 text-xs">
+        <div className="flex items-center gap-3"><span className="opacity-80">Tentang Kami</span><span className="opacity-80">Kolaborasi</span><span className="opacity-80">Kemahasiswaan</span><span className="opacity-80">Laporan Tahunan</span><span className="opacity-80">Kalender Akademik</span><span className="opacity-80">Aplikasi Internal</span></div>
+        <div><Badge>🇮🇩 Bahasa Indonesia</Badge></div>
+      </Container>
+    </div>
+  );
+
+  function Navbar(){
+    const [open,setOpen] = useState(false);
+    useEffect(()=> { const onKey = e => e.key==="Escape" && setOpen(false); window.addEventListener("keydown",onKey); return ()=> window.removeEventListener("keydown",onKey);},[]);
+    return (
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-gray-100">
+        <Container className="flex items-center justify-between py-4">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600" aria-hidden />
+            <div className="leading-tight"><p className="text-sm font-semibold text-gray-900">{SITE.brand.short}</p><p className="text-xs text-gray-500">{SITE.brand.name}</p></div>
+          </div>
+          <nav className="hidden lg:flex items-center gap-6" aria-label="Primary">
+            {SITE.nav.map(n=> <a key={n.href} href={n.href} className="text-sm font-medium text-gray-700 hover:text-gray-900">{n.label}</a>)}
+            <a href="#daftar" className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">Daftar</a>
+          </nav>
+          <button className="lg:hidden rounded-lg border border-gray-300 p-2" aria-label="Toggle menu" onClick={()=>setOpen(v=>!v)}>☰</button>
+        </Container>
+        {open && <div className="lg:hidden border-t border-gray-100 bg-white"><Container className="py-4 grid gap-2">{SITE.nav.map(n=> <a key={n.href} href={n.href} className="text-sm font-medium text-gray-700">{n.label}</a>)}<a href="#daftar" className="mt-2 rounded-lg bg-indigo-600 px-4 py-2 text-center text-sm font-semibold text-white">Daftar</a></Container></div>}
+      </header>
+    );
+  }
+
+  // === Sections (Hero, Programs, News, Collaboration, Alumni, About, CTA, Footer) ===
+  const Hero = ()=> (
+    <section id="beranda" className="relative overflow-hidden">
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-indigo-50 to-white" aria-hidden />
+      <div className="pointer-events-none absolute -top-24 -left-24 h-96 w-96 rounded-full bg-indigo-200/40 blur-3xl" aria-hidden />
+      <Container className="py-16 lg:py-24">
+        <div className="grid items-center gap-10 lg:grid-cols-2">
+          <div>
+            <Badge>Institut Sains & Teknologi</Badge>
+            <h1 className="mt-4 text-3xl font-black leading-tight text-gray-900 sm:text-5xl">{SITE.hero.title}</h1>
+            <p className="mt-4 text-lg text-gray-600">{SITE.hero.subtitle}</p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              {SITE.hero.ctas.map(c=> <a key={c.href} href={c.href} className="rounded-full bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow hover:bg-indigo-700">{c.label}</a>)}
+              <a href="#program" className="rounded-full border border-gray-300 px-5 py-3 text-sm font-semibold text-gray-700">Lihat Program</a>
+            </div>
+          </div>
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl border border-gray-200 bg-white shadow">
+            <div className="absolute inset-0 grid place-items-center"><span className="text-sm text-gray-500">[Gambar Kampus Placeholder — ganti di /assets]</span></div>
+          </div>
+        </div>
+      </Container>
+    </section>
+  );
+
+  const Programs = ()=> (
+    <section id="program" className="py-16 lg:py-24">
+      <Container><SectionHeading eyebrow="Program Studi" title="Pilihan Program Studi" subtitle="Siap level up? Kembangkan bakatmu jadi keahlian profesional." center />
+        <Card>
+          <TabGroup tabs={SITE.programs.tabs} renderList={(tab)=> (
+            <div>
+              <p className="text-sm text-gray-500">{tab.faculty}</p>
+              <ul className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+                {tab.items.length ? tab.items.map((name,i)=><li key={i} className="flex items-start gap-2"><span className="mt-1 text-indigo-600">•</span><span className="text-gray-800">{name}</span></li>) : <li className="text-gray-500">Informasi RPL akan diperbarui.</li>}
+              </ul>
+              <div className="mt-6"><a href="#daftar" className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">Daftar</a></div>
+            </div>
+          )}/>
+        </Card>
+      </Container>
+    </section>
+  );
+
+  const News = ()=> (
+    <section id="berita" className="bg-gray-50 py-16 lg:py-24">
+      <Container><SectionHeading eyebrow="Berita Terbaru" title="Sorotan & Kegiatan" center />
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{SITE.news.map((n,i)=>
+          <Card key={i} className="flex flex-col">
+            <div className="aspect-[16/9] w-full overflow-hidden rounded-xl bg-gray-100" aria-hidden />
+            <div className="mt-4"><p className="text-xs uppercase tracking-wide text-indigo-600">{n.date}</p><h3 className="mt-1 text-lg font-semibold text-gray-900">{n.title}</h3><p className="mt-2 text-sm text-gray-600">{n.excerpt}</p></div>
+            <div className="mt-4"><a href={n.href} className="text-sm font-semibold text-indigo-600 hover:text-indigo-700">Selengkapnya →</a></div>
+          </Card>
+        )}</div>
+        <div className="mt-8 text-center"><a href="#" className="text-sm font-semibold text-gray-700 hover:text-gray-900">Lihat Semua Berita →</a></div>
+      </Container>
+    </section>
+  );
+
+  const Collaboration = ()=> (
+    <section id="kolaborasi" className="py-16 lg:py-24"><Container><SectionHeading eyebrow="Kolaborasi" title="ISTN Kampus Kolaborasi: ISTN x Industri" subtitle="Jejaring kemitraan strategis untuk pengalaman belajar dan karier yang relevan." center /><LogoCloud names={SITE.partners} /></Container></section>
+  );
+
+  const Alumni = ()=> (
+    <section id="alumni" className="bg-gray-50 py-16 lg:py-24"><Container><SectionHeading eyebrow="Alumni" title="Alumni ISTN Highlights" center />
+      <Card className="grid gap-6 md:grid-cols-3">
+        <div className="md:col-span-2">
+          <h3 className="text-xl font-bold text-gray-900">{SITE.alumni.featured.name}</h3>
+          <p className="text-sm text-gray-600">{SITE.alumni.featured.headline}</p>
+          <p className="mt-4 text-gray-700 italic">“{SITE.alumni.featured.quote}”</p>
+          <div className="mt-6"><a href={SITE.alumni.featured.href} className="text-sm font-semibold text-indigo-600">Profile Alumni Lainnya →</a></div>
+        </div>
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-gray-100" aria-hidden />
+      </Card>
+    </Container></section>
+  );
+
+  const About = ()=> (
+    <section id="tentang" className="py-16 lg:py-24"><Container><SectionHeading eyebrow="Tentang Kami" title="Sepintas Lalu" center />
+      <div className="grid gap-8 md:grid-cols-2">
+        <Card><p className="text-gray-700">{SITE.about.summary}</p>
+          <dl className="mt-6 grid gap-3"><div><dt className="text-sm font-semibold text-gray-900">Alamat Kampus</dt><dd className="text-gray-700">{SITE.about.address}</dd></div></dl>
+        </Card>
+        <Card><h3 className="text-lg font-semibold text-gray-900">Visi</h3><p className="mt-2 text-gray-700">{SITE.about.vision}</p><h3 className="mt-6 text-lg font-semibold text-gray-900">Misi</h3><ul className="mt-2 list-disc pl-5 text-gray-700">{SITE.about.mission.map((m,i)=><li key={i} className="mt-1">{m}</li>)}</ul></Card>
+      </div>
+    </Container></section>
+  );
+
+  const CTA = ()=> (
+    <section id="daftar" className="relative overflow-hidden py-16 lg:py-24"><div className="absolute inset-0 -z-10 bg-gradient-to-br from-indigo-600 to-violet-600" aria-hidden />
+      <Container className="text-center text-white"><h2 className="text-3xl font-extrabold sm:text-4xl">Siap bergabung?</h2><p className="mt-3 text-white/90">Daftar sekarang dan pilih jalur suksesmu.</p><div className="mt-6 flex justify-center gap-3"><a href="#" className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-gray-900">Formulir Pendaftaran</a><a href="#program" className="rounded-full border border-white/70 px-5 py-3 text-sm font-semibold text-white">Lihat Program</a></div></Container>
+    </section>
+  );
+
+  const Footer = ()=> (
+    <footer className="border-t border-gray-200 bg-white"><Container className="py-12"><div className="grid gap-8 md:grid-cols-4">
+      <div><div className="mb-3 h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600" aria-hidden /><p className="text-sm text-gray-600">{SITE.brand.name}</p><div className="mt-4 flex gap-3">{SITE.social.map(s=> <a key={s.label} href={s.href} className="text-sm font-semibold text-gray-700 hover:text-gray-900">{s.label}</a>)}</div></div>
+      <div><h4 className="text-sm font-semibold text-gray-900">Site Menu</h4><ul className="mt-3 space-y-2 text-sm text-gray-700">{SITE.nav.slice(0,8).map(n=> <li key={n.href}><a href={n.href} className="hover:text-gray-900">{n.label}</a></li>)}</ul></div>
+      <div><h4 className="text-sm font-semibold text-gray-900">Informasi</h4><ul className="mt-3 space-y-2 text-sm text-gray-700"><li><a href="#kalender" className="hover:text-gray-900">Kalender Akademik</a></li><li><a href="#aplikasi" className="hover:text-gray-900">Aplikasi Internal</a></li><li><a href="#beasiswa" className="hover:text-gray-900">Beasiswa</a></li></ul></div>
+      <div><h4 className="text-sm font-semibold text-gray-900">Kontak</h4><p className="mt-3 text-sm text-gray-700">{SITE.about.address}</p><p className="mt-2 text-sm text-gray-500">© 2025 – Semua hak cipta pada pemiliknya masing‑masing.</p></div>
+    </div></Container></footer>
+  );
+
+  // === App ===
+  function App(){
+    return (<div className="text-gray-900 antialiased"><SkipToContent /><TopBar /><Navbar /><main id="main"><Hero /><Programs /><News /><Collaboration /><Alumni /><About /><CTA /></main><Footer /></div>);
+  }
+
+  // Render
+  ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+  </script>
+
+  <!-- LEGAL NOTES in HTML comments:
+       - Gambar/logo placeholder: replace /assets/placeholder-*.jpg
+       - Tailwind CDN is for prototyping; for production, build Tailwind in your pipeline.
+       - Remove Babel in production and compile JSX to JS ahead-of-time.
+  -->
+</body>
+</html>
